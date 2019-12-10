@@ -6,6 +6,7 @@ const path = require("path");
 const sha1File = require('sha1-file')
 
 const IS_WINDOWS = process.platform === 'win32';
+const IS_MACOS = process.platform === 'darwin';
 
 const scripts_base_url        = "https://raw.githubusercontent.com/AdaCore/gnat_community_install_script/master/";
 const install_script_qs_url   = scripts_base_url + "install_script.qs";
@@ -59,11 +60,18 @@ async function installGNATCommunity (year : string, target : string) {
     await download(install_script_qs_url, script_qs);
 
     if (IS_WINDOWS) {
-        await io.mv(dlFile, dlFile + ".exe");
-        await exec.exec(`${dlFile}.exe --verbose --script ${script_qs} InstallPrefix=${installDir}`);
+        await io.mv(dlFile, pack + ".exe");
+        await exec.exec(`${pack}.exe --verbose --script ${script_qs} InstallPrefix=${installDir}`);
     } else {
+
         await download(install_package_sh_url, script_sh);
-        await exec.exec(`sh ${script_sh} ${dlFile} ${installDir}`);
+
+        if (IS_MACOS) {
+            await io.mv(dlFile, pack + ".dmg");
+            await exec.exec(`sh ${script_sh} ${pack}.dmg ${installDir}`);
+        } else {
+            await exec.exec(`sh ${script_sh} ${dlFile} ${installDir}`);
+        }
     }
 
     core.addPath(path.join(installDir, 'bin'));
