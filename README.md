@@ -1,9 +1,27 @@
-# JavaScript Action Template
-
-This template offers an easy way to get started writing a JavaScript action with TypeScript compile time support, unit testing with Jest and using the GitHub Actions Toolkit.
+# Ada toolchain installation Action
 
 ## Getting Started
 
-See the walkthrough located [here](https://github.com/actions/toolkit/blob/master/docs/javascript-action.md).
+Basic:
+```yaml
+steps:
+- uses: actions/checkout@master
+- uses: ada-actions/toolchain@dev
+  with:
+    distrib: fsf
+    target: native
+- run: gprbuild hello
+- uses: ada-actions/toolchain@dev
+  with:
+    distrib: community
+    target: arm-elf
+- run: gprbuild --target=arm-eabi --RTS=zfp-microbit hello
+```
 
-In addition to walking your through how to create an action, it also provides strategies for versioning, releasing and referencing your actions.
+# License
+
+The scripts and documentation in this project are released under the [MIT License](LICENSE)
+
+# Contributions
+
+Contributions are welcome!  See [Contributor's Guide](docs/contributors.md)
