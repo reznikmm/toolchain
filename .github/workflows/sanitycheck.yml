@@ -11,31 +11,42 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-    
+
     steps:
        - uses: actions/checkout@master
-       - uses: ada-actions/toolchain@dev
+       - uses: ada-actions/toolchain@ce2020
          with:
            distrib: community
            target: native
        - run: gprbuild hello
- 
-       - uses: ada-actions/toolchain@dev
+
+       - uses: ada-actions/toolchain@ce2020
          with:
            distrib: community
            target: arm-elf
+         if: ${{ ! contains(matrix.os, 'macos') }}
        - run: gprbuild --target=arm-eabi --RTS=zfp-microbit hello
-         
-       - uses: ada-actions/toolchain@dev
+         if: ${{ ! contains(matrix.os, 'macos') }}
+
+       - uses: ada-actions/toolchain@ce2020
          with:
            distrib: community
            target: riscv32-elf
          if: contains(matrix.os, 'ubuntu')
-       
+
        - run: gprbuild --target=riscv32-elf --RTS=zfp-hifive1 hello
          if: contains(matrix.os, 'ubuntu')
 
-       - uses: ada-actions/toolchain@dev
+       - uses: ada-actions/toolchain@ce2020
+         with:
+           distrib: community
+           target: riscv64-elf
+         if: contains(matrix.os, 'ubuntu')
+
+       - run: gprbuild --target=riscv64-elf --RTS=zfp-spike hello
+         if: contains(matrix.os, 'ubuntu')
+
+       - uses: ada-actions/toolchain@ce2020
          with:
            distrib: fsf
            target: native

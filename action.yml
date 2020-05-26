@@ -12,8 +12,8 @@ inputs:
     description: 'Target architecture (native, arm-elf, riscv32-elf)'
     default: 'native'
   community_year:
-    description: 'Year of the community release (2019)'
-    default: '2019'
+    description: 'Year of the community release (2020, 2019)'
+    default: '2020'
 runs:
   using: 'node12'
   main: 'lib/main.js'
