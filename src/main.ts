@@ -20,6 +20,28 @@ async function download(url, dest) {
     await io.mv(fileName, dest);
 };
 
+//  Fetch directory where libgcc.a is located. This looks like
+//  <prefix>/lib/gcc/x86_64-pc-linux-gnu/8.3.1
+async function getGccDirectory(gcc) {
+    let gccOutput = '';
+    let options = {
+        listeners: {
+            stdout: (data: Buffer) => { gccOutput += data.toString(); }
+        }
+    };
+    await exec.exec(gcc, ['-print-libgcc-file-name'], options);
+    return path.dirname(gccOutput);
+};
+
+async function setLdPath(installDir, name, extra_segment) {
+    const gcc_path = await getGccDirectory(path.join(installDir, 'bin', 'gcc'));
+    const adalib = path.join(gcc_path, extra_segment, 'adalib');
+    const libDir = path.join(installDir, 'lib');
+    const oldValue = (name in process.env) ? process.env[name] + ':' : '';
+    console.log(`Export ${name}=${oldValue}${libDir}:${adalib}`)
+    core.exportVariable(name, `${oldValue}${libDir}:${adalib}`);
+}
+
 async function installGNATCommunity (year : string, target : string) {
 
     if (!community_configs[process.platform]) {
@@ -69,8 +91,10 @@ async function installGNATCommunity (year : string, target : string) {
         if (IS_MACOS) {
             await io.mv(dlFile, pack + ".dmg");
             await exec.exec(`sh ${script_sh} ${pack}.dmg ${installDir}`);
+            setLdPath(installDir, 'DYLD_LIBRARY_PATH', 'rts-native');
         } else {
             await exec.exec(`sh ${script_sh} ${dlFile} ${installDir}`);
+            setLdPath(installDir, 'LD_LIBRARY_PATH', '');
         }
     }
 
