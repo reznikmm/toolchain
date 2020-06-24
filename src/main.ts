@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as io from '@actions/io';
 import * as tc from '@actions/tool-cache';
 import * as exec from '@actions/exec';
+import * as fs from 'fs';
 const path = require("path");
 const sha1File = require('sha1-file')
 
@@ -20,7 +21,7 @@ async function download(url, dest) {
     await io.mv(fileName, dest);
 };
 
-async function installGNATCommunity (year : string, target : string) {
+async function installGNATCommunity (year : string, target : string, install_dir : string) {
 
     if (!community_configs[process.platform]) {
         core.setFailed(`Unknown platform '${process.platform}' for GNAT community`);
@@ -41,6 +42,13 @@ async function installGNATCommunity (year : string, target : string) {
     var pack = release.pack;
     var url = release.url;
     var sha1 = release.sha1;
+    const bin = path.resolve(install_dir, pack, 'bin');
+
+    if (install_dir != '' && fs.existsSync(bin)) {
+        console.log(`Package found: '${bin}'. Skip installation.`);
+        core.addPath(bin);
+        return
+    }
 
     console.log("Downloading '" + url + "'");
     const dlFile = await tc.downloadTool(url);
@@ -51,10 +59,12 @@ async function installGNATCommunity (year : string, target : string) {
     }
         
     const tmpDir = path.dirname(dlFile);
-    const installDir = path.join (tmpDir, pack);
+    const installDir = (install_dir == '') ? path.join (tmpDir, pack) 
+                        : path.resolve(install_dir, pack);
     const script_qs = path.join (tmpDir, "install_script.qs");
     const script_sh = path.join (tmpDir, "install_package.sh");
 
+    await io.mkdirP(installDir);
     console.log("Installing: '" + dlFile + "' in '" + installDir + "'")
 
     await download(install_script_qs_url, script_qs);
@@ -102,7 +112,8 @@ async function run() {
             break;
         case "community":
             const year = core.getInput('community_year');
-            await installGNATCommunity(year, target);
+            const install_dir = core.getInput('install_dir');
+            await installGNATCommunity(year, target, install_dir);
             break;
         default:
             core.setFailed(`Unknown distrib: '${distrib}'`)
